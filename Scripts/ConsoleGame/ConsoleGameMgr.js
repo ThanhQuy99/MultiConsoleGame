@@ -1,7 +1,15 @@
 const globalNetwork = require('globalNetwork');
-const { formatMoney } = require('utils');
+const { formatMoney, convertSlotMatrixTBLR } = require('utils');
 const gameNetwork = window.GameNetwork || require('game-network');
 const EventManager = gameNetwork.EventManager;
+
+const StateGameMode = {
+    1: "normal",
+    2: "free",
+    3: "freeOption",
+    4: "bonus",
+    5: "respin",
+}
 
 cc.Class({
     extends: cc.Component,
@@ -12,6 +20,8 @@ cc.Class({
         noticeLabel: cc.Label,
         labelWinAmt: cc.Label,
         gameID: cc.Label,
+        gameResult: cc.Node,
+        labelPrefab: cc.Prefab,
         buttonStartGame: cc.Node,
         iconSpin: cc.Node,
     },
@@ -20,6 +30,7 @@ cc.Class({
         this.node.director = this;
         this.joinGameSuccess = false;
         this.betID = '90';
+        this.buttonStartGame.active = false;
     },
     setUpGame() {
         this.gameID.string = this.node.gameId;
@@ -45,7 +56,8 @@ cc.Class({
     },
 
     stateUpdate(data) {
-        const { winAmount, freeGameRemain } = data;
+        this.noticeNode.active = false;
+        const { winAmount, freeGameRemain, respinGameRemain } = data;
         this._tweenAutoSpin && this._tweenAutoSpin.stop();
         this._tweenAutoSpin = cc.tween(this.node)
             .delay(1)
@@ -53,18 +65,47 @@ cc.Class({
                 this._tweenRotate && this._tweenRotate.stop();
                 this.labelGameMode.string = this.isFreeGame ? "Free" : "Normal";
                 this.labelWinAmt.string = "" + (winAmount ? formatMoney(winAmount) : '0');
+                this.showResult(data);
             })
             .delay(1)
             .call(() => {
                 this.isFreeGame = !!freeGameRemain;
+                this.isRespin = !!respinGameRemain;
+
                 this.sendSpinToNetwork();
             })
             .start();
     },
+    showResult(data) {
+        this.iconSpin.opacity = 1;
+        const { matrix } = data;
+        const { tableFormat, tableFormatFree } = this.node.configGameConsole;
+        const format = this.isFreeGame ? tableFormatFree : tableFormat;
+        const matrixFormat = convertSlotMatrixTBLR(matrix, format);
+        for (let col = 0; col < format.length; col++) {
+            const rowNum = format[col];
+            for (let row = 0; row < rowNum; row++) {
+                const label = cc.instantiate(this.labelPrefab);
+                label.parent = this.gameResult;
+                label.position = this._getPosByColRow(col, row, format);
+                label.getComponent(cc.Label).string = matrixFormat[col][row];
+            }
+        }
+
+    },
+    _getPosByColRow(col, row, tableFormat) {
+        const startX = -(tableFormat.length / 2 - 0.5) * 35;
+        const startY = (tableFormat[col] / 2 - 0.5) * 35;
+        const x = startX + 35 * col;
+        const y = startY - row * 35;
+        return cc.v2(x, y);
+    },
+
     onJoinGameSuccess(data) {
         this.joinGameSuccess = true;
         this.showMessageForceClose = false;
         const { dataResume, extendData } = data;
+        this.buttonStartGame.active = true;
         if (extendData) {
             const { mBet, eBet } = extendData;
             if (mBet) {
@@ -76,11 +117,18 @@ cc.Class({
                 this.betID = this.betID[0] + minExBet.split(';')[0];
             }
         }
-        if (dataResume && dataResume.freeGameRemain) {
-            this.isFreeGame = true;
+        if (dataResume) {
+            if (dataResume.freeGameRemain) {
+                this.isFreeGame = true;
+            }
+            if (dataResume.respinGameRemain) {
+                this.isRespin = true;
+            }
         }
     },
     sendSpinToNetwork() {
+        this.gameResult.removeAllChildren();
+        this.iconSpin.opacity = 255;
         this._tweenRotate && this._tweenRotate.stop();
         this._tweenRotate = cc.tween(this.iconSpin)
             .by(0.5, { angle: 360 })
@@ -90,11 +138,33 @@ cc.Class({
         this.labelWinAmt.string = "";
         this.labelGameMode.string = "";
 
-        if (this.isFreeGame) {
-            this.gameStateManager.triggerFreeSpinRequest();
+        if (this.isRespin) {
+            this._respinClick();
+        } else if (this.isFreeGame) {
+            this._freeSpinClick();
         } else {
-            this.gameStateManager.triggerSpinRequest(this.betID);
+            this._spinClick();
         }
+    },
+    onCloseButtonClick() {
+        this.gameStateManager && this.gameStateManager.outGame();
+        this.node.destroy();
+    },
+
+    _spinClick() {
+        this.gameStateManager.triggerSpinRequest(this.betID);
+    },
+    _freeSpinClick() {
+        this.gameStateManager.triggerFreeSpinRequest();
+    },
+    _bonusClick() {
+        this.gameStateManager.triggerMiniGame(openCell);
+    },
+    _freeOptionClick() {
+        this.gameStateManager.triggerFreeSpinOption(option);
+    },
+    _respinClick() {
+        this.gameStateManager.triggerRespinRequest();
     },
 
 
@@ -234,9 +304,8 @@ cc.Class({
             }, time)
         }
     },
-    onDestroy() {
-        this.gameStateManager && this.gameStateManager.outGame();
-    },
+
+    onDestroy() { },
     init() { },
     initGameMode() { },
 });
