@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+
+  <title>Game</title>
+
+  <!--http://www.html5rocks.com/en/mobile/mobifying/-->
+  <meta name="viewport"
+    content="width=device-width,user-scalable=no,initial-scale=1, minimum-scale=1,maximum-scale=1, viewport-fit=cover"/>
+
+  <!--https://developer.apple.com/library/safari/documentation/AppleApplications/Reference/SafariHTMLRef/Articles/MetaTags.html-->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+
+  <!-- force webkit on 360 -->
+  <meta name="renderer" content="webkit"/>
+  <meta name="force-rendering" content="webkit"/>
+  <!-- force edge on IE -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+  <meta name="msapplication-tap-highlight" content="no">
+
+  <!-- force full screen on some browser -->
+  <meta name="full-screen" content="yes"/>
+  <meta name="x5-fullscreen" content="true"/>
+  <meta name="360-fullscreen" content="true"/>
+
+  <!-- force screen orientation on some browser -->
+  <meta name="screen-orientation" content="<%=orientation%>"/>
+  <meta name="x5-orientation" content="<%=orientation%>">
+
+  <!--fix fireball/issues/3568 -->
+  <!--<meta name="browsermode" content="application">-->
+  <meta name="x5-page-mode" content="app">
+
+  <!--<link rel="apple-touch-icon" href=".png" />-->
+  <!--<link rel="apple-touch-icon-precomposed" href=".png" />-->
+  <!-- <script src="https://cdn.rawgit.com/inexorabletash/polyfill/v0.1.42/polyfill.min.js"></script> -->
+  <link rel="stylesheet" type="text/css" href="style-mobile.css"/>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/swipe-up@1.2.16/dist/swipe-up.min.js"></script>
+</head>
+<body>
+  <canvas id="GameCanvas" oncontextmenu="event.preventDefault()" tabindex="0"></canvas>
+  <div id="mask">
+    <!-- <h1 id="tip">Vui lòng vuốt lên để thấy toàn màn hình</h1>-->
+    <div id="image"></div> 
+  </div>
+  <div id="handImage">
+  </div>
+
+  <div id="div_full_screen" style="width: 100%;height: 100%;visibility: hidden;display: none">
+    <div id="enterFullscreen" class="enterFullScreen_Portrait"></div>
+    <div id="exitFullscreen" class="exitFullscreen_Portrait"></div>
+  </div>
+
+  <div id="splash" style="display: none">
+    <!-- <div class="progress-bar">
+      <span style="width: 0%"></span>
+    </div> -->
+  </div>
+  <div id="splashGamePortrait" style="display: none">
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-polyfills/0.1.42/polyfill.min.js" charset="utf-8"></script>
+<script src="lib/howler.min.js" charset="utf-8"></script>
+<script src="src/settings.js" charset="utf-8"></script>
+<script src="lib/common.js" charset="utf-8"></script>
+<script src="main.js" charset="utf-8"></script>
+
+<script type="text/javascript">
+  var uaGame = navigator.userAgent;
+  var isCocCocIPhone = uaGame.indexOf('coc_coc_browser')  > -1 && (uaGame.indexOf('iPhone')  > -1 || uaGame.indexOf('iPad')  > -1);
+  if (window.buildTime && uaGame.indexOf(' UCBrowser/') === -1 && !isCocCocIPhone) {
+    var buildTime = parseInt(window.buildTime) + 15552000000;
+    if (new Date().getTime() < buildTime) {
+      document.write('<script src="https://browser.sentry-cdn.com/6.13.2/bundle.min.js" integrity="sha384-fcgCrdIqrZ6d6fA8EfCAfdjgN9wXDp0EOkueSo3bKyI3WM4tQCE0pOA/kJoqHYoI" crossorigin="anonymous"><\/script>');
+    }
+  }
+
+(function () {
+    // open web debugger console
+    if (typeof VConsole !== 'undefined') {
+        window.vConsole = new VConsole();
+    }
+    var splash = document.getElementById('splash');
+    var splashGamePortrait = document.getElementById('splashGamePortrait');
+    var isPortraitGame = window._CCSettings.orientation === "portrait";
+    var isAutoOrientationGame = window._CCSettings.orientation === "";
+
+    var isMobile = navigator.userAgent.match(/(iPad)|(iPhone)|(iPod)|(android)|(webOS)/i) != null;
+    var ratio = window.innerHeight/window.innerWidth*50;
+    splash.classList.remove("splashPortrait");
+    if(splashGamePortrait) {
+        splashGamePortrait.classList.remove("splashPortrait");
+    }
+    if(window.innerWidth < window.innerHeight && isMobile && !isPortraitGame){
+        ratio = window.innerWidth/window.innerHeight*50;
+        splash.classList.add("splashPortrait");
+        splash.style.transformOrigin = ratio+'% 50%';
+    }else if(window.innerWidth > window.innerHeight && isMobile && (isPortraitGame || isAutoOrientationGame)){
+        ratio = window.innerWidth/window.innerHeight*50;
+        if(splashGamePortrait) {
+            splashGamePortrait.classList.add("splashPortrait");
+            splashGamePortrait.style.transformOrigin = ratio+'% 50%';
+        }
+    }
+    var cocos2d = document.createElement('script');
+    cocos2d.async = true;
+    var cocosMin = '.1f833.js';
+    var fullURL = window.location.href;
+    if (fullURL.indexOf('ktrng3995') > -1 || fullURL.indexOf('kts9989') > -1) {
+      cocosMin = '.1f833.js';
+    }
+    else if (fullURL.indexOf('kts9') > -1 || fullURL.indexOf('ktf19') > -1 || fullURL.indexOf('ktrng3') > -1 || fullURL.indexOf('ktc7') > -1 ||  fullURL.indexOf('kts6') > -1 ) {
+      // new approach for ios14
+      cocosMin = '.afa06.js';
+    }
+    cocos2d.src = 'cocos2d-js.js';
+
+    var engineLoaded = function () {
+        document.body.removeChild(cocos2d);
+        cocos2d.removeEventListener('load', engineLoaded, false);
+        window.boot();
+    };
+    cocos2d.addEventListener('load', engineLoaded, false);
+    document.body.appendChild(cocos2d);
+
+})();
+window.fbAsyncInit = function() {
+    FB.init({
+      appId      : '1223859395234926',
+      cookie     : true,
+      xfbml      : true,
+      version    : 'v15.0'
+    });
+    FB.AppEvents.logPageView();   
+  };
+
+(function(d, s, id){
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) {return;}
+    js = d.createElement(s); js.id = id;
+    js.src = "https://connect.facebook.net/en_US/sdk.js";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+</script>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-151522596-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-151522596-1');
+</script>
+</body>
+</html>

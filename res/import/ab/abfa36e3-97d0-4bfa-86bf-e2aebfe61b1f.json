@@ -1,0 +1,73 @@
+{
+  "__type__": "cc.JsonAsset",
+  "_name": "LobbyConfig",
+  "json": {
+    "isPortrait": false,
+    "splitBundle": false,
+    "splitPlatform": true,
+    "remote-asset-url": "https://hotupdate.staging.enostd.gay/remote-asset-k1-new/",
+    "remote-asset-storage": "enotion-remote-assets",
+    "games": {
+      "1999": {
+        "isPortrait": false,
+        "startScene": "ktf1999Loading",
+        "isActive": true,
+        "icon": "1999"
+      },
+      "3998": {
+        "isPortrait": false,
+        "startScene": "R3998",
+        "isActive": true,
+        "icon": "3998"
+      },
+      "5998": {
+        "isPortrait": false,
+        "startScene": "g5998",
+        "isActive": true,
+        "icon": "5998"
+      },
+      "9881": {
+        "isPortrait": false,
+        "startScene": "g9881",
+        "isActive": true,
+        "icon": "9881"
+      },
+      "9906": {
+        "isPortrait": false,
+        "startScene": "g9906",
+        "isActive": true,
+        "icon": "9906"
+      },
+      "9968": {
+        "isPortrait": false,
+        "startScene": "g9968",
+        "isActive": true,
+        "icon": "9968"
+      },
+      "9987": {
+        "isPortrait": false,
+        "startScene": "g9987",
+        "isActive": true,
+        "icon": "9987"
+      },
+      "9988": {
+        "isPortrait": false,
+        "startScene": "g9988",
+        "isActive": true,
+        "icon": "9988"
+      },
+      "9991": {
+        "isPortrait": false,
+        "startScene": "g9991",
+        "isActive": true,
+        "icon": "9991"
+      },
+      "9999": {
+        "isPortrait": false,
+        "startScene": "g9999b",
+        "isActive": true,
+        "icon": "9999"
+      }
+    }
+  }
+}

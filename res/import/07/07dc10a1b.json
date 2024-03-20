@@ -1,0 +1,98 @@
+[
+  {
+    "__type__": "cc.SpriteFrame",
+    "content": {
+      "name": "9921",
+      "texture": "ecV3pTq/tCh7HCLBAdZzl7",
+      "rect": [
+        519,
+        1,
+        256,
+        257
+      ],
+      "offset": [
+        0,
+        1
+      ],
+      "originalSize": [
+        258,
+        259
+      ],
+      "capInsets": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "__type__": "cc.SpriteAtlas",
+    "_name": "iconLobby.plist",
+    "_spriteFrames": {
+      "1990": {
+        "__uuid__": "deGpfRkmVN94ITh3lA/phU"
+      },
+      "9921": {
+        "__uuid__": "51EWr0nhND8KlXk8kQZjj4"
+      },
+      "9922": {
+        "__uuid__": "7c3OinXU1BurVqDljcSt1u"
+      }
+    }
+  },
+  {
+    "__type__": "cc.SpriteFrame",
+    "content": {
+      "name": "9922",
+      "texture": "ecV3pTq/tCh7HCLBAdZzl7",
+      "rect": [
+        261,
+        1,
+        256,
+        259
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "originalSize": [
+        258,
+        259
+      ],
+      "capInsets": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "__type__": "cc.SpriteFrame",
+    "content": {
+      "name": "1990",
+      "texture": "ecV3pTq/tCh7HCLBAdZzl7",
+      "rect": [
+        1,
+        1,
+        258,
+        259
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "originalSize": [
+        258,
+        259
+      ],
+      "capInsets": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  }
+]
