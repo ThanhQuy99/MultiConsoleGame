@@ -30987,6 +30987,7 @@ window.__require = function e(t, n, r) {
         this.node.director = this;
         this.joinGameSuccess = false;
         this.betID = "90";
+        this.buttonStartGame.active = false;
       },
       setUpGame: function setUpGame() {
         this.gameID.string = this.node.gameId;
@@ -31012,6 +31013,7 @@ window.__require = function e(t, n, r) {
       },
       stateUpdate: function stateUpdate(data) {
         var _this = this;
+        this.noticeNode.active = false;
         var winAmount = data.winAmount, freeGameRemain = data.freeGameRemain;
         this._tweenAutoSpin && this._tweenAutoSpin.stop();
         this._tweenAutoSpin = cc.tween(this.node).delay(1).call(function() {
@@ -31027,6 +31029,7 @@ window.__require = function e(t, n, r) {
         this.joinGameSuccess = true;
         this.showMessageForceClose = false;
         var dataResume = data.dataResume, extendData = data.extendData;
+        this.buttonStartGame.active = true;
         if (extendData) {
           var mBet = extendData.mBet, eBet = extendData.eBet;
           if (mBet) {
@@ -31049,6 +31052,9 @@ window.__require = function e(t, n, r) {
         this.labelWinAmt.string = "";
         this.labelGameMode.string = "";
         this.isFreeGame ? this.gameStateManager.triggerFreeSpinRequest() : this.gameStateManager.triggerSpinRequest(this.betID);
+      },
+      onCloseButtonClick: function onCloseButtonClick() {
+        this.node.destroy();
       },
       showMessageAuthFailed: function showMessageAuthFailed() {
         var AUTHEN_FAILED = this.node.config.MESSAGE_DIALOG.AUTHEN_FAILED;
