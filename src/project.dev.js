@@ -47688,18 +47688,51 @@ window.__require = function e(t, n, r) {
       },
       onLoad: function onLoad() {
         this.poolFactory = this.node.poolFactory;
-        this.configGame = this.configGameConsole.json;
       },
       addNewGame: function addNewGame() {
         var gameId = this.editBox.string;
+        var configGame = this.configGameConsole.json;
         if (gameId && gameId.length) {
-          var config = this.configGame && this.configGame[gameId] ? this.configGame[gameId] : this.configGame.all;
+          var config = configGame && configGame[gameId] ? configGame[gameId] : configGame.all;
           var newGamePrefab = this.poolFactory.getObject("ConsoleGame");
           newGamePrefab.gameId = gameId;
           newGamePrefab.configGameConsole = config;
           newGamePrefab.parent = this.layoutHolder;
           newGamePrefab.active = true;
         }
+      },
+      exportFile: function exportFile() {
+        this._exportDataFile(JSON.stringify(this.configGameConsole), "ConfigGameConsole");
+      },
+      importFile: function importFile() {
+        var _this = this;
+        this._importDataFile(function(data) {
+          _this.configGameConsole = JSON.parse(data);
+        });
+      },
+      _exportDataFile: function _exportDataFile(dataStr, fileName) {
+        var type = fileName.split(".").pop();
+        var dataUri = "data:application/" + type + ";charset=utf-8," + encodeURIComponent(dataStr);
+        var linkElement = document.createElement("a");
+        linkElement.setAttribute("href", dataUri);
+        linkElement.setAttribute("download", fileName);
+        linkElement.click();
+      },
+      _importDataFile: function _importDataFile(callback) {
+        var input = window.document.createElement("input");
+        input.type = "file";
+        setTimeout(function() {
+          input.click();
+        }, 500);
+        input.onchange = function() {
+          var selectedFile = input.files[0];
+          var reader = new FileReader();
+          reader.onload = function(event) {
+            console.log("file loaded", event.target.result);
+            callback(event.target.result);
+          };
+          reader.readAsText(selectedFile);
+        };
       }
     });
     cc._RF.pop();
