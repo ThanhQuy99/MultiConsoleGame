@@ -30969,9 +30969,16 @@ window.__require = function e(t, n, r) {
     cc._RF.push(module, "21bccAHRrtFV7hzARm0lUBJ", "ConsoleGameMgr");
     "use strict";
     var globalNetwork = require("globalNetwork");
-    var _require = require("utils"), formatMoney = _require.formatMoney;
+    var _require = require("utils"), formatMoney = _require.formatMoney, convertSlotMatrixTBLR = _require.convertSlotMatrixTBLR;
     var gameNetwork = window.GameNetwork || require("game-network");
     var EventManager = gameNetwork.EventManager;
+    var StateGameMode = {
+      1: "normal",
+      2: "free",
+      3: "freeOption",
+      4: "bonus",
+      5: "respin"
+    };
     cc.Class({
       extends: cc.Component,
       properties: {
@@ -30980,6 +30987,8 @@ window.__require = function e(t, n, r) {
         noticeLabel: cc.Label,
         labelWinAmt: cc.Label,
         gameID: cc.Label,
+        gameResult: cc.Node,
+        labelPrefab: cc.Prefab,
         buttonStartGame: cc.Node,
         iconSpin: cc.Node
       },
@@ -31014,16 +31023,41 @@ window.__require = function e(t, n, r) {
       stateUpdate: function stateUpdate(data) {
         var _this = this;
         this.noticeNode.active = false;
-        var winAmount = data.winAmount, freeGameRemain = data.freeGameRemain;
+        var winAmount = data.winAmount, freeGameRemain = data.freeGameRemain, respinGameRemain = data.respinGameRemain;
         this._tweenAutoSpin && this._tweenAutoSpin.stop();
         this._tweenAutoSpin = cc.tween(this.node).delay(1).call(function() {
           _this._tweenRotate && _this._tweenRotate.stop();
           _this.labelGameMode.string = _this.isFreeGame ? "Free" : "Normal";
           _this.labelWinAmt.string = "" + (winAmount ? formatMoney(winAmount) : "0");
+          _this.showResult(data);
         }).delay(1).call(function() {
           _this.isFreeGame = !!freeGameRemain;
+          _this.isRespin = !!respinGameRemain;
           _this.sendSpinToNetwork();
         }).start();
+      },
+      showResult: function showResult(data) {
+        this.iconSpin.opacity = 1;
+        var matrix = data.matrix;
+        var _node$configGameConso = this.node.configGameConsole, tableFormat = _node$configGameConso.tableFormat, tableFormatFree = _node$configGameConso.tableFormatFree;
+        var format = this.isFreeGame ? tableFormatFree : tableFormat;
+        var matrixFormat = convertSlotMatrixTBLR(matrix, format);
+        for (var col = 0; col < format.length; col++) {
+          var rowNum = format[col];
+          for (var row = 0; row < rowNum; row++) {
+            var label = cc.instantiate(this.labelPrefab);
+            label.parent = this.gameResult;
+            label.position = this._getPosByColRow(col, row, format);
+            label.getComponent(cc.Label).string = matrixFormat[col][row];
+          }
+        }
+      },
+      _getPosByColRow: function _getPosByColRow(col, row, tableFormat) {
+        var startX = 35 * -(tableFormat.length / 2 - .5);
+        var startY = 35 * (tableFormat[col] / 2 - .5);
+        var x = startX + 35 * col;
+        var y = startY - 35 * row;
+        return cc.v2(x, y);
       },
       onJoinGameSuccess: function onJoinGameSuccess(data) {
         this.joinGameSuccess = true;
@@ -31041,9 +31075,14 @@ window.__require = function e(t, n, r) {
             this.betID = this.betID[0] + minExBet.split(";")[0];
           }
         }
-        dataResume && dataResume.freeGameRemain && (this.isFreeGame = true);
+        if (dataResume) {
+          dataResume.freeGameRemain && (this.isFreeGame = true);
+          dataResume.respinGameRemain && (this.isRespin = true);
+        }
       },
       sendSpinToNetwork: function sendSpinToNetwork() {
+        this.gameResult.removeAllChildren();
+        this.iconSpin.opacity = 255;
         this._tweenRotate && this._tweenRotate.stop();
         this._tweenRotate = cc.tween(this.iconSpin).by(.5, {
           angle: 360
@@ -31051,10 +31090,26 @@ window.__require = function e(t, n, r) {
         this.buttonStartGame.active = false;
         this.labelWinAmt.string = "";
         this.labelGameMode.string = "";
-        this.isFreeGame ? this.gameStateManager.triggerFreeSpinRequest() : this.gameStateManager.triggerSpinRequest(this.betID);
+        this.isRespin ? this._respinClick() : this.isFreeGame ? this._freeSpinClick() : this._spinClick();
       },
       onCloseButtonClick: function onCloseButtonClick() {
+        this.gameStateManager && this.gameStateManager.outGame();
         this.node.destroy();
+      },
+      _spinClick: function _spinClick() {
+        this.gameStateManager.triggerSpinRequest(this.betID);
+      },
+      _freeSpinClick: function _freeSpinClick() {
+        this.gameStateManager.triggerFreeSpinRequest();
+      },
+      _bonusClick: function _bonusClick() {
+        this.gameStateManager.triggerMiniGame(openCell);
+      },
+      _freeOptionClick: function _freeOptionClick() {
+        this.gameStateManager.triggerFreeSpinOption(option);
+      },
+      _respinClick: function _respinClick() {
+        this.gameStateManager.triggerRespinRequest();
       },
       showMessageAuthFailed: function showMessageAuthFailed() {
         var AUTHEN_FAILED = this.node.config.MESSAGE_DIALOG.AUTHEN_FAILED;
@@ -31188,9 +31243,7 @@ window.__require = function e(t, n, r) {
           _this2.noticeNode.active = false;
         }, time);
       },
-      onDestroy: function onDestroy() {
-        this.gameStateManager && this.gameStateManager.outGame();
-      },
+      onDestroy: function onDestroy() {},
       init: function init() {},
       initGameMode: function initGameMode() {}
     });
@@ -47630,16 +47683,20 @@ window.__require = function e(t, n, r) {
       extends: cc.Component,
       properties: {
         layoutHolder: cc.Node,
-        editBox: cc.EditBox
+        editBox: cc.EditBox,
+        configGameConsole: cc.JsonAsset
       },
       onLoad: function onLoad() {
         this.poolFactory = this.node.poolFactory;
+        this.configGame = this.configGameConsole.json;
       },
       addNewGame: function addNewGame() {
         var gameId = this.editBox.string;
         if (gameId && gameId.length) {
+          var config = this.configGame && this.configGame[gameId] ? this.configGame[gameId] : this.configGame.all;
           var newGamePrefab = this.poolFactory.getObject("ConsoleGame");
           newGamePrefab.gameId = gameId;
+          newGamePrefab.configGameConsole = config;
           newGamePrefab.parent = this.layoutHolder;
           newGamePrefab.active = true;
         }
