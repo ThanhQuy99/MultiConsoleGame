@@ -25,7 +25,7 @@ cc.Class({
         }
     },
     exportFile() {
-        this._exportDataFile(JSON.stringify(this.configGameConsole), "ConfigGameConsole");
+        this._exportDataFile(JSON.stringify(this.configGameConsole), "ConfigGameConsole.json");
     },
     importFile() {
         this._importDataFile((data) => {
@@ -35,7 +35,7 @@ cc.Class({
 
 
     _exportDataFile(dataStr, fileName) {
-        let type = fileName.split(".").pop();
+        let type = fileName;
         const dataUri = `data:application/${type};charset=utf-8,${encodeURIComponent(dataStr)}`;
         const linkElement = document.createElement('a');
         linkElement.setAttribute('href', dataUri);
